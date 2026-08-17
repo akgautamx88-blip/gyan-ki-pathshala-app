@@ -1,0 +1,2 @@
+import { GraduationCap, Sparkles } from 'lucide-react';
+export default function Brand({compact=false}){return <div className="flex items-center gap-3"><div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-900 text-white shadow-lg"><GraduationCap size={24}/></div><div className={compact?'hidden sm:block':''}><div className="font-black text-blue-900">ज्ञान की पाठशाला</div><div className="text-xs text-slate-500 flex items-center gap-1"><Sparkles size={11}/> पढ़ो • सीखो • आगे बढ़ो • सफलता पाओ</div></div></div>}
