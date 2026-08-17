@@ -1,2 +1,47 @@
-import {BookOpen,ClipboardCheck,FileText,Users,Video,Wallet} from 'lucide-react';import StatCard from '../StatCard';
-export default function StudentDashboard({name='Student',setPage}){return <div className="p-4 sm:p-6"><div className="rounded-3xl bg-gradient-to-br from-blue-950 via-blue-900 to-emerald-700 p-6 text-white shadow-xl"><div className="flex flex-wrap items-start justify-between gap-5"><div><div className="text-sm text-blue-100">नमस्ते {name} 👋</div><h1 className="mt-2 text-3xl font-black">आज क्या सीखना है?</h1><p className="mt-2 max-w-xl text-sm text-blue-100">ज्ञान की पाठशाला में आपका स्वागत है। नियमित अभ्यास करें और अपनी तैयारी को मजबूत बनाएं।</p></div><div className="rounded-2xl bg-white/10 p-4 backdrop-blur"><b>आकाश सर</b><div className="mt-1 text-xs text-blue-100">B.Sc. Agriculture | M.Sc. Ag | B.Ed.</div></div></div><div className="mt-6 rounded-2xl bg-amber-400 px-4 py-3 text-sm font-bold text-amber-950">📢 कोचिंग नोटिस: नए टेस्ट और अध्ययन सामग्री उपलब्ध है।</div></div><div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4"><StatCard icon={BookOpen} label="कुल टेस्ट" value="7"/><StatCard icon={Video} label="वीडियो/नोट्स" value="24" accent="green"/><StatCard icon={ClipboardCheck} label="पेंडिंग गृहकार्य" value="3" accent="amber"/><StatCard icon={Users} label="उपस्थिति" value="92%" accent="green"/></div><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[[Video,'वीडियो एवं नोट्स','content'],[ClipboardCheck,'गृहकार्य','homework'],[BookOpen,'ऑनलाइन टेस्ट','tests'],[Users,'मेरी उपस्थिति','attendance'],[Wallet,'कोर्स एवं फीस','fees'],[FileText,'मेरी प्रोफाइल','profile']].map(([I,t,id])=><button onClick={()=>setPage(id)} key={id} className="group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-900 group-hover:bg-blue-900 group-hover:text-white"><I/></div><div className="font-bold">{t}</div><div className="mt-1 text-xs text-slate-500">देखें और आगे बढ़ें →</div></button>)}</div></div>}
+import { useState } from 'react';
+import StatCard from './StatCard';
+import { BookOpen, Award, Clock, Calendar } from 'lucide-react';
+
+export default function StudentDashboard({ name, setPage }) {
+  return (
+    <div className="p-6 space-y-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">नमस्ते, {name || 'Student'} 👋</h1>
+        <p className="text-gray-600">ज्ञान की पाठशाला में आपका स्वागत है।</p>
+      </header>
+
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="कुल कोर्स" value="4" icon={BookOpen} color="bg-blue-500" />
+        <StatCard title="उपस्थिति" value="88%" icon={Calendar} color="bg-green-500" />
+        <StatCard title="पूरे टेस्ट" value="12" icon={Award} color="bg-purple-500" />
+        <StatCard title="लंबित कार्य" value="2" icon={Clock} color="bg-amber-500" />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mt-8 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">त्वरित विकल्प</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <button 
+            onClick={() => setPage && setPage('courses')}
+            className="p-4 bg-indigo-50 text-indigo-700 rounded-lg text-left font-medium hover:bg-indigo-100 transition"
+          >
+            📚 मेरे कोर्स
+          </button>
+          <button 
+            onClick={() => setPage && setPage('tests')}
+            className="p-4 bg-emerald-50 text-emerald-700 rounded-lg text-left font-medium hover:bg-emerald-100 transition"
+          >
+            📝 टेस्ट सीरीज
+          </button>
+          <button 
+            onClick={() => setPage && setPage('attendance')}
+            className="p-4 bg-amber-50 text-amber-700 rounded-lg text-left font-medium hover:bg-amber-100 transition"
+          >
+            📅 उपस्थिति देखें
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
