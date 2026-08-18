@@ -1,91 +1,99 @@
-import React, { useEffect, useState } from 'react';
-import Login from './Login';
-import Layout from './Layout';
+import React, { useState } from 'react';
 import StudentDashboard from './StudentDashboard';
-import StudentManager from './StudentManager';
-import { supabase } from './api';
+import AdminDashboard from './AdminDashboard';
+import TestSeries from './TestSeries';
+import CourseManager from './CourseManager';
+import AppSettings from './AppSettings';
 
 export default function App() {
-  const [session, setSession] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState('student');
-  const [page, setPage] = useState('home');
-
-  useEffect(() => {
-    // Session Check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setUserProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchProfile = async (userId) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (data) {
-      setUserProfile(data);
-      if (data.role === 'admin') setMode('admin');
-    }
-    setLoading(false);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUserProfile(null);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm">
-        ज्ञाना की पाठशाला लोड हो रही है...
-      </div>
-    );
-  }
-
-  // अगर यूजर लॉगिन नहीं है तो Login स्क्रीन दिखाएं
-  if (!session) {
-    return (
-      <Login
-        onLoginSuccess={(newSession, profile) => {
-          setSession(newSession);
-          setUserProfile(profile);
-          if (profile?.role === 'admin') setMode('admin');
-        }}
-      />
-    );
-  }
+  const [role, setRole] = useState('student'); // 'student' या 'admin'
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
-    <Layout
-      mode={mode}
-      setMode={setMode}
-      page={page}
-      setPage={setPage}
-      studentName={userProfile?.full_name || 'Student'}
-      onLogout={handleLogout}
-    >
-      {mode === 'admin' ? (
-        <StudentManager />
-      ) : (
-        <StudentDashboard name={userProfile?.full_name} setPage={setPage} />
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-800">
+      {/* 🔝 टॉप नेविगेशन बार */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 px-4 py-3 shadow-sm">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📖</span>
+            <div>
+              <h1 className="font-extrabold text-base sm:text-lg text-indigo-700 leading-none">ज्ञान की पाठशाला</h1>
+              <p className="text-[10px] text-slate-500 font-medium mt-0.5">आकाश सर की क्लास</p>
+            </div>
+          </div>
+
+          {/* 🔄 Student vs Admin स्विच मोड */}
+          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border">
+            <button
+              onClick={() => { setRole('student'); setActiveTab('dashboard'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                role === 'student' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              🎓 Student Mode
+            </button>
+            <button
+              onClick={() => { setRole('admin'); setActiveTab('admin_courses'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                role === 'admin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              👑 Admin Mode
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* 👑 एडमिन सब-मेन्यू (जब Admin Mode चालू हो) */}
+      {role === 'admin' && (
+        <div className="bg-slate-900 text-white border-b border-slate-800 px-4 py-2">
+          <div className="max-w-7xl mx-auto flex gap-2 overflow-x-auto text-xs font-medium">
+            <button
+              onClick={() => setActiveTab('admin_courses')}
+              className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
+                activeTab === 'admin_courses' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              📚 Dynamic Courses
+            </button>
+            <button
+              onClick={() => setActiveTab('admin_content')}
+              className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
+                activeTab === 'admin_content' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              📤 PDF / Video Manager
+            </button>
+            <button
+              onClick={() => setActiveTab('admin_settings')}
+              className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
+                activeTab === 'admin_settings' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              ⚙️ App & Teacher Settings
+            </button>
+          </div>
+        </div>
       )}
-    </Layout>
+
+      {/* 📱 मुख्य कंटेंट एरिया */}
+      <main className="py-6">
+        {role === 'student' ? (
+          activeTab === 'test_series' ? (
+            <div className="max-w-7xl mx-auto px-4">
+              <TestSeries onBack={() => setActiveTab('dashboard')} />
+            </div>
+          ) : (
+            <StudentDashboard name="आकाश" />
+          )
+        ) : (
+          <div className="max-w-7xl mx-auto px-4">
+            {activeTab === 'admin_courses' && <CourseManager />}
+            {activeTab === 'admin_content' && <AdminDashboard />}
+            {activeTab === 'admin_settings' && <AppSettings />}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
