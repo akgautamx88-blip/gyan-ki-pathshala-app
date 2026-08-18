@@ -1,43 +1,91 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import Login from './Login';
 import Layout from './Layout';
 import StudentDashboard from './StudentDashboard';
-import GenericPage from './GenericPage';
-import { getSession, getProfile } from './api';
+import StudentManager from './StudentManager';
+import { supabase } from './api';
 
 export default function App() {
+  const [session, setSession] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState('student');
   const [page, setPage] = useState('home');
-  const [session, setSession] = useState(null);
-  const [name, setName] = useState('Student');
 
   useEffect(() => {
-    getSession().then(({ data }) => {
-      setSession(data?.session || null);
-      if (data?.session?.user?.id) {
-        getProfile(data.session.user.id).then(({ data: p }) => {
-          if (p?.full_name) setName(p.full_name);
-        });
+    // Session Check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
       }
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setUserProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const adminPages = ['students', 'review', 'attendance', 'tests', 'courses', 'payments', 'settings'];
-  const current = mode === 'student' && page === 'home' 
-    ? <StudentDashboard name={name} setPage={setPage} /> 
-    : <GenericPage page={page} mode={mode} />;
+  const fetchProfile = async (userId) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data) {
+      setUserProfile(data);
+      if (data.role === 'admin') setMode('admin');
+    }
+    setLoading(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setUserProfile(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm">
+        ज्ञाना की पाठशाला लोड हो रही है...
+      </div>
+    );
+  }
+
+  // अगर यूजर लॉगिन नहीं है तो Login स्क्रीन दिखाएं
+  if (!session) {
+    return (
+      <Login
+        onLoginSuccess={(newSession, profile) => {
+          setSession(newSession);
+          setUserProfile(profile);
+          if (profile?.role === 'admin') setMode('admin');
+        }}
+      />
+    );
+  }
 
   return (
-    <Layout 
-      mode={mode} 
-      page={page} 
-      setPage={setPage} 
-      onToggleMode={() => {
-        setMode(m => m === 'student' ? 'admin' : 'student');
-        setPage(mode === 'student' ? 'students' : 'home');
-      }} 
-      studentName={name}
+    <Layout
+      mode={mode}
+      setMode={setMode}
+      page={page}
+      setPage={setPage}
+      studentName={userProfile?.full_name || 'Student'}
+      onLogout={handleLogout}
     >
-      {current}
+      {mode === 'admin' ? (
+        <StudentManager />
+      ) : (
+        <StudentDashboard name={userProfile?.full_name} setPage={setPage} />
+      )}
     </Layout>
   );
 }
